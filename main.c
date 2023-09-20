@@ -26,7 +26,7 @@ int main(int tz, char **tb)
 				exit(126);
 			if (errno == ENOENT)
 			{
-				_eputs(tz[0]);
+				_eputs(tb[0]);
 				_eputs(": 0: Can't open ");
 				_eputs(tb[1]);
 				_eputchar('\n');
