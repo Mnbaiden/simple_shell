@@ -1,88 +1,55 @@
 #include "shell.h"
 
 /**
- * _myexit - Exits the shell
- * @info: Structure containing potential arguments. Used to maintain
- *        constant function prototype.
- * Return: Exits with a given exit status (0) if info->argv[0] != "exit"
+ * myls - Implementation of a basic 'ls' command
+ * @info: Pointer to info_t structure
+ * Return: Always returns 0
  */
-int _myexit(info_t *info)
+int myls(info_t *info)
 {
-	if (info->argv[1])
-	{
-		int exit_status = _erratoi(info->argv[1]);
+    DIR *dir;
+    struct dirent *entry;
 
-		if (exit_status == -1)
-		{
-			info->status = 2;
-			print_error(info, "Illegal number: ");
-			_eputs(info->argv[1]);
-			_eputchar('\n');
-			return (1);
-		}
-		info->err_num = exit_status;
-	}
-	else
-	{
-		info->err_num = -1;
-	}
-	return (-2);
+    if (info->argc != 1)
+    {
+        _eputs("Usage: myls\n");
+        return (0);
+    }
+
+    dir = opendir(".");
+    if (!dir)
+    {
+        perror("myls");
+        return (0);
+    }
+
+    while ((entry = readdir(dir)) != NULL)
+    {
+        _puts(entry->d_name);
+        _putchar('\n');
+    }
+
+    closedir(dir);
+    return (0);
 }
+
 /**
- * _mycd - Changes the current directory of the process
- * @info: Structure containing potential arguments. Used to maintain
- * constarnt function prottotype
- * Return: Always 0
+ * main - Entry point
+ * @argc: Argument count
+ * @argv: Argument vector
+ * @env: Environment variables
+ * Return: Always returns 0
  */
-int _mycd(info_t *info)
+int main(int argc, char *argv[], char *env[])
 {
-	char *dir = NULL;
-	char buffer[1024];
+    info_t info = INFO_INIT;
 
-	char *current_dir = getcwd(buffer, sizeof(buffer));
+    (void)argc;
+    (void)argv;
+    info.env = add_node_end(&info.env, env[0], 0);
 
-	if (!current_dir)
-	{
-		_puts("TODO: >>getcwd failure emsg here<<\n");
-		return (1);
-	}
-	if (!info->argv[1])
-	{
-		dir = _getenv(info, "HOME=");
-	}
-	else if (_strcmp(info->argv[1], "-") == 0)
-	{
-		dir = _getenv(info, "OLDPWD=");
-		if (!dir)
-		{
-			_puts(current_dir);
-			_putchar('\n');
-			return (1);
-		}
-	}
-	else
-	{
-		dir = info->argv[1];
-	}
-	int chdir_ret = chdir(dir ? dir : "/");
+    myls(&info);
 
-	if (chdir_ret == -1)
-	{
-		print_error(info, "cannot cd to ");
-		_eputs(info->argv[1]);
-		_eputchar('\n');
-	}
-	return (0);
-}
-/**
- * _myhelp - displays help info
- * @info: Structure containing potential argumnts. used to
- * maintain constant function prototype
- * Return: Always 0
- */
-
-int _myhelp(info_t *info)
-{
-	_puts("The Help call is active, Function is not yet carried out");
-	return (0);
+    free_list(&info.env);
+    return (0);
 }
