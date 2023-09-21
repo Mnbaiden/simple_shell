@@ -1,106 +1,55 @@
 #include "shell.h"
 
 /**
- * _myhistory - displays the history list, one command per line, preceded
- *              by line numbers starting at 0.
- * @info: Structure containing potential arguments. Used to maintain
- *        a constant function prototype.
- * Return: Always 0
+ * mycat - Implementation of a basic 'cat' command
+ * @info: Pointer to info_t structure
+ * Return: Always returns 0
  */
-int _myhistory(info_t *info)
+int mycat(info_t *info)
 {
-    list_t *node = info->history;
-    int line_number = 0;
+    int fd, n;
+    char buffer[READ_BUF_SIZE];
 
-    while (node != NULL)
+    if (info->argc != 2)
     {
-        printf("%d %s\n", line_number++, node->str);
-        node = node->next;
+        _eputs("Usage: mycat <file>\n");
+        return (0);
     }
 
+    fd = open(info->argv[1], O_RDONLY);
+    if (fd == -1)
+    {
+        perror("mycat");
+        return (0);
+    }
+
+    while ((n = read(fd, buffer, READ_BUF_SIZE)) > 0)
+        write(STDOUT_FILENO, buffer, n);
+
+    if (n == -1)
+        perror("mycat");
+
+    close(fd);
     return (0);
 }
 
 /**
- * unset_alias - removes an alias from the alias list.
- * @info: parameter struct
- * @alias: the alias string to remove
- *
- * Return: 0 on success, 1 on error
+ * main - Entry point
+ * @argc: Argument count
+ * @argv: Argument vector
+ * @env: Environment variables
+ * Return: Always returns 0
  */
-int unset_alias(info_t *info, char *alias)
+int main(int argc, char *argv[], char *env[])
 {
-    return (delete_node_at_index(&(info->alias),
-             get_node_index(info->alias, node_starts_with(info->alias, alias, -1))));
-}
+    info_t info = INFO_INIT;
 
-/**
- * set_alias - adds or updates an alias in the alias list.
- * @info: parameter struct
- * @alias: the alias string to set
- *
- * Return: 0 on success, 1 on error
- */
-int set_alias(info_t *info, char *alias)
-{
-    unset_alias(info, alias);
-    return (add_node_end(&(info->alias), alias, 0) == NULL);
-}
+    (void)argc;
+    (void)argv;
+    info.env = add_node_end(&info.env, env[0]);
 
-/**
- * print_alias - prints an alias string.
- * @node: the alias node to print
- *
- * Return: 0 on success, 1 on error
- */
-int print_alias(list_t *node)
-{
-    char *p;
+    mycat(&info);
 
-    if (node)
-    {
-        p = _strchr(node->str, '=');
-        if (p)
-        {
-            *p = '\0';
-            printf("%s '%s'\n", node->str, p + 1);
-            *p = '=';
-            return (0);
-        }
-    }
-    return (1);
-}
-
-/**
- * _myalias - mimics the alias builtin (man alias).
- * @info: Structure containing potential arguments. Used to maintain
- *        a constant function prototype.
- * Return: Always 0
- */
-int _myalias(info_t *info)
-{
-    int i;
-    char *p;
-
-    if (info->argc == 1)
-    {
-        list_t *node = info->alias;
-        while (node)
-        {
-            print_alias(node);
-            node = node->next;
-        }
-        return (0);
-    }
-
-    for (i = 1; info->argv[i]; i++)
-    {
-        p = _strchr(info->argv[i], '=');
-        if (p)
-            set_alias(info, info->argv[i]);
-        else
-            print_alias(node_starts_with(info->alias, info->argv[i], '='));
-    }
-
+    free_list(&info.env);
     return (0);
 }
